@@ -1,12 +1,12 @@
 import {
-  EnhancedDataSetInfo,
+  ProviderInfo,
   DataSetData,
-  ApprovedProviderInfo,
+  EnhancedDataSetInfo,
 } from "@filoz/synapse-sdk";
 
 export interface DataSet extends EnhancedDataSetInfo {
   data: DataSetData | null;
-  provider: ApprovedProviderInfo | null;
+  provider: ProviderInfo | null;
 }
 
 export interface DatasetsResponse {

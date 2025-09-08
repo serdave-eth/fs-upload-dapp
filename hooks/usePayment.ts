@@ -1,16 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
-import { useEthersSigner } from "@/hooks/useEthers";
 import { useState } from "react";
 import { useConfetti } from "@/hooks/useConfetti";
-import {
-  Synapse,
-  TOKENS,
-  CONTRACT_ADDRESSES,
-  TIME_CONSTANTS,
-} from "@filoz/synapse-sdk";
-import { DATA_SET_CREATION_FEE, MAX_UINT256, getDataset } from "@/utils";
+import { TOKENS, TIME_CONSTANTS } from "@filoz/synapse-sdk";
+import { DATA_SET_CREATION_FEE, MAX_UINT256 } from "@/utils";
 import { useAccount } from "wagmi";
 import { config } from "@/config";
+import { useSynapse } from "@/providers/SynapseProvider";
 
 /**
  * Hook to handle payment for storage
@@ -22,10 +17,10 @@ import { config } from "@/config";
  * @returns Mutation and status
  */
 export const usePayment = () => {
-  const signer = useEthersSigner();
   const [status, setStatus] = useState<string>("");
   const { triggerConfetti } = useConfetti();
   const { address } = useAccount();
+  const { synapse, warmStorageService } = useSynapse();
   const mutation = useMutation({
     mutationFn: async ({
       lockupAllowance,
@@ -36,19 +31,19 @@ export const usePayment = () => {
       epochRateAllowance: bigint;
       depositAmount: bigint;
     }) => {
-      if (!signer) throw new Error("Signer not found");
       if (!address) throw new Error("Address not found");
-
+      if (!synapse) throw new Error("Synapse not found");
+      if (!warmStorageService)
+        throw new Error("Warm storage service not found");
       setStatus("🔄 Preparing transaction...");
-      const synapse = await Synapse.create({
-        signer,
-        disableNonceManager: false,
-      });
-      const paymentsAddress = CONTRACT_ADDRESSES.PAYMENTS[synapse.getNetwork()];
 
-      const { dataset } = await getDataset(synapse, address);
+      const paymentsAddress = synapse.getPaymentsAddress();
 
-      const hasDataset = !!dataset;
+      const dataset = (
+        await warmStorageService.getClientDataSetsWithDetails(address)
+      ).filter((dataset) => dataset.withCDN === config.withCDN);
+
+      const hasDataset = dataset.length > 0;
 
       const fee = hasDataset ? 0n : DATA_SET_CREATION_FEE;
 
@@ -68,9 +63,9 @@ export const usePayment = () => {
       if (allowance < MAX_UINT256 / 2n) {
         setStatus("💰 Approving USDFC to cover storage costs...");
         const transaction = await synapse.payments.approve(
-          TOKENS.USDFC,
           paymentsAddress,
-          MAX_UINT256
+          MAX_UINT256,
+          TOKENS.USDFC
         );
         await transaction.wait();
         setStatus("💰 Successfully approved USDFC to cover storage costs");

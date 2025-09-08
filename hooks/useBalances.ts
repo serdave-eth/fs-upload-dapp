@@ -1,25 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
-import { Synapse, TOKENS } from "@filoz/synapse-sdk";
-import { useEthersProvider } from "@/hooks/useEthers";
+import { TOKENS } from "@filoz/synapse-sdk";
 import { useAccount } from "wagmi";
 import { calculateStorageMetrics } from "@/utils/calculateStorageMetrics";
 import { formatUnits } from "viem";
 import { defaultBalances, UseBalancesResponse } from "@/types";
+import { useSynapse } from "@/providers/SynapseProvider";
 
 /**
  * Hook to fetch and format wallet balances and storage metrics
  */
 export const useBalances = () => {
-  const provider = useEthersProvider();
+  const { synapse } = useSynapse();
   const { address } = useAccount();
 
   const query = useQuery({
-    enabled: !!address && !!provider,
     queryKey: ["balances", address],
     queryFn: async (): Promise<UseBalancesResponse> => {
-      if (!provider) throw new Error("Provider not found");
-
-      const synapse = await Synapse.create({ provider });
+      if (!synapse) throw new Error("Synapse not found");
 
       // Fetch raw balances
       const [filRaw, usdfcRaw, paymentsRaw] = await Promise.all([
