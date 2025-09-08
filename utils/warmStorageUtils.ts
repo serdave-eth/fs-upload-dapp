@@ -1,12 +1,12 @@
-import {
-  WarmStorageService,
-  SIZE_CONSTANTS,
-  Synapse,
-  TIME_CONSTANTS,
-} from "@filoz/synapse-sdk";
 import { config } from "@/config";
 import { WarmStorageBalance, StorageCosts } from "@/types";
 import { DATA_SET_CREATION_FEE } from "@/utils/constants";
+import {
+  SIZE_CONSTANTS,
+  Synapse,
+  TIME_CONSTANTS,
+  WarmStorageService,
+} from "@filoz/synapse-sdk";
 
 /**
  * Fetches the current storage costs from the WarmStorage service.
@@ -16,10 +16,9 @@ import { DATA_SET_CREATION_FEE } from "@/utils/constants";
 export const fetchWarmStorageCosts = async (
   synapse: Synapse
 ): Promise<StorageCosts> => {
-  const warmStorageService = new WarmStorageService(
+  const warmStorageService = await WarmStorageService.create(
     synapse.getProvider(),
-    synapse.getWarmStorageAddress(),
-    synapse.getPDPVerifierAddress()
+    synapse.getWarmStorageAddress()
   );
   return warmStorageService.getServicePrice();
 };
@@ -36,10 +35,9 @@ export const fetchWarmStorageBalanceData = async (
   storageCapacityBytes: number,
   persistencePeriodDays: number
 ): Promise<WarmStorageBalance> => {
-  const warmStorageService = new WarmStorageService(
+  const warmStorageService = await WarmStorageService.create(
     synapse.getProvider(),
-    synapse.getWarmStorageAddress(),
-    synapse.getPDPVerifierAddress()
+    synapse.getWarmStorageAddress()
   );
   return warmStorageService.checkAllowanceForStorage(
     storageCapacityBytes,

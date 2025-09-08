@@ -13,7 +13,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { ConfettiProvider } from "@/providers/ConfettiProvider";
 import Footer from "@/components/ui/Footer";
 import { GeolocationProvider } from "@/providers/GeolocationProvider";
-
+import { SynapseProvider } from "@/providers/SynapseProvider";
 const queryClient = new QueryClient();
 
 const config = createConfig({
@@ -60,11 +60,13 @@ export default function RootLayout({
                     modalSize="compact"
                     initialChain={filecoinCalibration.id}
                   >
-                    <main className="flex flex-col min-h-screen">
-                      <Navbar />
-                      {children}
-                    </main>
-                    <Footer />
+                    <SynapseProvider>
+                      <main className="flex flex-col min-h-screen">
+                        <Navbar />
+                        {children}
+                      </main>
+                      <Footer />
+                    </SynapseProvider>
                   </RainbowKitProvider>
                 </WagmiProvider>
               </QueryClientProvider>

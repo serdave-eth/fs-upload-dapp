@@ -1,8 +1,8 @@
-import { Synapse, TIME_CONSTANTS } from "@filoz/synapse-sdk";
-import { WarmStorageService } from "@filoz/synapse-sdk";
+import { checkAllowances } from "./warmStorageUtils";
 import { config } from "@/config";
+import { Synapse, TIME_CONSTANTS } from "@filoz/synapse-sdk";
+import { WarmStorageService } from "@filoz/synapse-sdk/warm-storage";
 import { ethers } from "ethers";
-import { checkAllowances } from "@/utils/warmStorageUtils";
 
 /**
  * Performs a preflight check before file upload to ensure sufficient USDFC balance and allowances
@@ -27,10 +27,9 @@ export const preflightCheck = async (
 ) => {
   // Verify signer and provider are available
   // Initialize Pandora service for allowance checks
-  const warmStorageService = new WarmStorageService(
+  const warmStorageService = await WarmStorageService.create(
     synapse.getProvider(),
-    synapse.getWarmStorageAddress(),
-    synapse.getPDPVerifierAddress()
+    synapse.getWarmStorageAddress()
   );
 
   // Step 1: Check if current allowance is sufficient for the file size

@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Synapse } from "@filoz/synapse-sdk";
-import { useEthersSigner } from "@/hooks/useEthers";
 import { useConfetti } from "@/hooks/useConfetti";
 import { useAccount } from "wagmi";
 import { preflightCheck } from "@/utils/preflightCheck";
-import { getDataset } from "@/utils/getDataset";
-import { config } from "@/config";
+import { useSynapse } from "@/providers/SynapseProvider";
+import { Synapse } from "@filoz/synapse-sdk";
 
 export type UploadedInfo = {
   fileName?: string;
@@ -22,16 +20,14 @@ export const useFileUpload = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
   const [uploadedInfo, setUploadedInfo] = useState<UploadedInfo | null>(null);
-
-  const signer = useEthersSigner();
+  const { synapse } = useSynapse();
   const { triggerConfetti } = useConfetti();
-  const { address, chainId } = useAccount();
+  const { address } = useAccount();
   const mutation = useMutation({
-    mutationKey: ["file-upload", address, chainId],
+    mutationKey: ["file-upload", address],
     mutationFn: async (file: File) => {
-      if (!signer) throw new Error("Signer not found");
+      if (!synapse) throw new Error("Synapse not found");
       if (!address) throw new Error("Address not found");
-      if (!chainId) throw new Error("Chain ID not found");
       setProgress(0);
       setUploadedInfo(null);
       setStatus("🔄 Initializing file upload to Filecoin...");
@@ -42,16 +38,11 @@ export const useFileUpload = () => {
       const uint8ArrayBytes = new Uint8Array(arrayBuffer);
 
       // 3) Create Synapse instance
-      const synapse = await Synapse.create({
-        signer,
-        disableNonceManager: false,
-        withCDN: config.withCDN,
-      });
 
       // 4) Get dataset
-      const { providerId } = await getDataset(synapse, address);
+      const datasets = await synapse.storage.findDataSets(address);
       // 5) Check if we have a dataset
-      const datasetExists = !!providerId;
+      const datasetExists = datasets.length > 0;
       // Include proofset creation fee if no proofset exists
       const includeDatasetCreationFee = !datasetExists;
 
@@ -71,7 +62,6 @@ export const useFileUpload = () => {
 
       // 7) Create storage service
       const storageService = await synapse.createStorage({
-        providerId,
         callbacks: {
           onDataSetResolved: (info) => {
             console.log("Dataset resolved:", info);

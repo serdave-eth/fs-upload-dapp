@@ -36,7 +36,7 @@ export const DatasetsViewer = () => {
             (dataset: DataSet | undefined) =>
               dataset && (
                 <div
-                  key={dataset.railId}
+                  key={dataset.clientDataSetId}
                   className="bg-gray-50 rounded-lg p-4 border border-gray-200"
                 >
                   <div className="flex justify-between items-start mb-4">
@@ -66,12 +66,13 @@ export const DatasetsViewer = () => {
                           className="cursor-pointer"
                           onClick={() => {
                             navigator.clipboard.writeText(
-                              dataset.provider?.serviceURL || ""
+                              dataset.provider?.products.PDP?.data.serviceURL ||
+                                ""
                             );
                             window.alert("PDP URL copied to clipboard");
                           }}
                         >
-                          {dataset.provider?.serviceURL}
+                          {dataset.provider?.products.PDP?.data.serviceURL}
                         </span>
                       </p>
                     </div>
@@ -118,11 +119,7 @@ export const DatasetsViewer = () => {
                           </div>
                           <div className="space-y-2">
                             {dataset.data.pieces.map((piece) => (
-                              <PieceDetails
-                                key={piece.pieceId}
-                                piece={piece}
-                                dataset={dataset!}
-                              />
+                              <PieceDetails key={piece.pieceId} piece={piece} />
                             ))}
                           </div>
                         </div>
@@ -145,13 +142,7 @@ export const DatasetsViewer = () => {
 /**
  * Component to display a piece and a download button
  */
-const PieceDetails = ({
-  piece,
-  dataset,
-}: {
-  piece: DataSetPieceData;
-  dataset: DataSet;
-}) => {
+const PieceDetails = ({ piece }: { piece: DataSetPieceData }) => {
   const filename = `piece-${piece.pieceCid}.png`;
   const { downloadMutation } = useDownloadPiece(
     piece.pieceCid.toString(),
