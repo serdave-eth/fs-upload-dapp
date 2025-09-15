@@ -5,6 +5,8 @@ import { useAccount } from "wagmi";
 import { preflightCheck } from "@/utils/preflightCheck";
 import { useSynapse } from "@/providers/SynapseProvider";
 import { Synapse } from "@filoz/synapse-sdk";
+import { config } from "@/config";
+import { preProcess } from '@keypo/typescript-sdk'
 
 export type UploadedInfo = {
   fileName?: string;
@@ -32,18 +34,19 @@ export const useFileUpload = () => {
       setUploadedInfo(null);
       setStatus("🔄 Initializing file upload to Filecoin...");
 
-      // 1) Convert File → ArrayBuffer
+      /*// 1) Convert File → ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
       // 2) Convert ArrayBuffer → Uint8Array
-      const uint8ArrayBytes = new Uint8Array(arrayBuffer);
-
+      const uint8ArrayBytes = new Uint8Array(arrayBuffer);*/
+      const { dataOut } = await preProcess(file, "dummy name");
+      const uint8ArrayBytes = dataOut;
       // 3) Create Synapse instance
 
       // 4) Get dataset
       const datasets = await synapse.storage.findDataSets(address);
       // 5) Check if we have a dataset
       const datasetExists = datasets.length > 0;
-      // Include proofset creation fee if no proofset exists
+      // Include dataset creation fee if no dataset exists
       const includeDatasetCreationFee = !datasetExists;
 
       // 6) Check if we have enough USDFC to cover the storage costs and deposit if not
@@ -62,6 +65,7 @@ export const useFileUpload = () => {
 
       // 7) Create storage service
       const storageService = await synapse.createStorage({
+        withCDN: config.withCDN,
         callbacks: {
           onDataSetResolved: (info) => {
             console.log("Dataset resolved:", info);

@@ -143,9 +143,9 @@ export const DatasetsViewer = () => {
  * Component to display a piece and a download button
  */
 const PieceDetails = ({ piece }: { piece: DataSetPieceData }) => {
-  const filename = `piece-${piece.pieceCid}.png`;
+  const filename = `piece-${piece.pieceId}`;
   const { downloadMutation } = useDownloadPiece(
-    piece.pieceCid.toString(),
+    piece.pieceCid.toV1().toString(),
     filename
   );
 
